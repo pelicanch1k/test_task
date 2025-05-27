@@ -1,0 +1,22 @@
+  version: "2"
+  sql:
+    - engine: "postgresql"
+      queries: "../database/query.sql"
+      schema: "../database/schema.sql"
+      gen:
+        go:
+          package: "gen"
+          out: "../internal/repository/gen"
+          sql_package: "pgx/v5"
+          overrides:
+            - db_type: "sessions"
+              go_type: 
+                type: "Session"
+                import: "lqd/internal/models"
+                package: "models"
+                pointer: false
+                slice: false
+            - db_type: "text"
+              go_type: "string"
+
+
