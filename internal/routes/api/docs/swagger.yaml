@@ -1,0 +1,109 @@
+definitions:
+  users.CreateUser:
+    properties:
+      name:
+        maxLength: 40
+        type: string
+      patronymic:
+        maxLength: 40
+        type: string
+      surname:
+        maxLength: 40
+        type: string
+    required:
+    - name
+    - patronymic
+    - surname
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/users:
+    get:
+      consumes:
+      - application/json
+      description: Creates a new user
+      parameters:
+      - description: Get users
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request - Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error - Database or server issue
+          schema:
+            type: string
+      summary: Add a new user
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user
+      parameters:
+      - description: Add User Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request - Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error - Database or server issue
+          schema:
+            type: string
+      summary: Add a new user
+      tags:
+      - Users
+  /api/v1/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user
+      parameters:
+      - description: ID человека для удаления
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request - Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error - Database or server issue
+          schema:
+            type: string
+      summary: Delete user
+      tags:
+      - Users
+swagger: "2.0"

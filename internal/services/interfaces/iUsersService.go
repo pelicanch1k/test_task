@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"test_task/internal/model"
 	"test_task/internal/repository/gen"
 )
 
@@ -12,4 +13,5 @@ type IUserService interface {
 
 	UpdateUser(ctx context.Context, userData *gen.UpdateUserParams) error
 
-	CreateUser(ctx context.Context, user *gen.CreateUserParams) (*gen.User, error)}
+	CreateUser(ctx context.Context, user *model.CreateUserParams) (*gen.User, error)
+}
