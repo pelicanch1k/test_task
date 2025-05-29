@@ -1,0 +1,2 @@
+-- Create "users" table
+CREATE TABLE "users" ("id" serial NOT NULL, "name" character varying(100) NOT NULL, "surname" character varying(100) NOT NULL, "patronymic" character varying(100) NULL, "age" integer NULL, "gender" character varying(20) NULL, "nationality" character varying(2) NULL, "created_at" timestamptz NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" timestamptz NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY ("id"));

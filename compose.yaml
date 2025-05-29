@@ -1,0 +1,65 @@
+services:
+  test_task:
+    build: 
+      context: ./
+      dockerfile: ./build/test_task.dockerfile 
+    depends_on:
+      - migrate
+    restart: no
+    env_file:
+      - .env
+    deploy:
+      replicas: 1
+    ports:
+      - "8080:8080"
+    networks:
+      - grpc-network
+      - geo-network
+
+  migrate:
+    build: 
+      context: ./
+      dockerfile: ./build/migrate.dockerfile
+    volumes:
+      - ./migrations/:/migrations
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - geo-network
+
+  postgres:  # <- Исправлены отступы (2 пробела)
+    image: postgres:17.2
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USERNAME"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - geo-network
+
+  geo_pgadmin:  # <- Исправлены отступы (2 пробела)
+    container_name: geo_pgadmin
+    image: dpage/pgadmin4
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.ru
+      PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - geo-network
+
+networks:
+  geo-network:
+    driver: bridge
+  grpc-network:  # <- Добавлена отсутствующая сеть
+    driver: bridge

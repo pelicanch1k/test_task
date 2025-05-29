@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"test_task/internal/repository/gen"
 )
 
@@ -12,16 +13,21 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{}
 }
 
-func (u *UserRepository) GetUsers(ctx context.Context, filters *gen.GetUsersParams) (*[]gen.User, error) {
+func (u *UserRepository) GetUsers(ctx context.Context, filters *gen.GetUsersParams) ([]gen.User, error) {
 	repo, release, err := GetQueriesFromPool(ctx, globalPool)
 	if err != nil {
 		return nil, repoError("GetUsers")
 	}
 	defer release()
 
+	fmt.Println(filters)
+
+	fmt.Printf("%+v\n", gen.GetUsersParams(*filters))
 	users, err := repo.GetUsers(ctx, gen.GetUsersParams(*filters))
 
-	return &users, err
+	fmt.Println("len: ", len(users))
+
+	return users, err
 }
 
 func (u *UserRepository) DeleteUser(ctx context.Context, id int32) error{

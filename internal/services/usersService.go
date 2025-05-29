@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"test_task/internal/model"
 	"test_task/internal/repository"
 	"test_task/internal/repository/gen"
@@ -23,10 +24,15 @@ func NewUserService() *UsersService {
 
 func (u *UsersService) CreateUser(ctx context.Context, user *model.CreateUserParams) (*gen.User, error) {
 	var patronymic, gender, nation pgtype.Text
-	var age pgtype.Int4
 
 	patronymic.Scan(user.Patronymic)
-	age.Scan(GetRequest("https://api.agify.io/?name=Dmitriy")["age"])
+
+	fmt.Println("Age: ", GetRequest("https://api.agify.io/?name=Dmitriy")["age"])
+	age, err := interfaceToIntViaString(GetRequest("https://api.agify.io/?name=Dmitriy")["age"])
+	if err != nil {
+		panic("невозможно преобразовать число")
+	}
+
 	gender.Scan(GetRequest("https://api.genderize.io/?name=Dmitriy")["gender"])
 
 	// Получаем доступ к вложенным структурам с проверками
@@ -49,7 +55,7 @@ func (u *UsersService) CreateUser(ctx context.Context, user *model.CreateUserPar
 		Name:        user.Name,
 		Surname:     user.Surname,
 		Patronymic:  patronymic,
-		Age:         age,
+		Age:         int32(age),
 		Gender:      gender,
 		Nationality: nation,
 	})
@@ -63,6 +69,6 @@ func (u *UsersService) DeleteUser(ctx context.Context, id int32) error {
 	return u.usersRepository.DeleteUser(ctx, id)
 }
 
-func (u *UsersService) GetUsers(ctx context.Context, filters *gen.GetUsersParams) (*[]gen.User, error) {
-	return u.usersRepository.GetUsers(ctx, filters)
+func (u *UsersService) GetUsers(ctx context.Context, filters *model.GetUsersParams) ([]gen.User, error) {
+	return u.usersRepository.GetUsers(ctx, ConvertToGetUsersParams(filters))
 }

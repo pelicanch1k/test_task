@@ -19,35 +19,6 @@ info:
   contact: {}
 paths:
   /api/v1/users:
-    get:
-      consumes:
-      - application/json
-      description: Creates a new user
-      parameters:
-      - description: Get users
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/users.CreateUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request - Invalid input
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error - Database or server issue
-          schema:
-            type: string
-      summary: Add a new user
-      tags:
-      - Users
     post:
       consumes:
       - application/json
@@ -83,11 +54,11 @@ paths:
       - application/json
       description: Delete user
       parameters:
-      - description: ID человека для удаления
-        in: path
+      - description: id юзера для удаления
+        in: query
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -104,6 +75,62 @@ paths:
           schema:
             type: string
       summary: Delete user
+      tags:
+      - Users
+  /api/v1/users/filter:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of users with optional filtering and pagination
+      parameters:
+      - description: Filter by name (case insensitive)
+        in: query
+        name: name
+        type: string
+      - description: Filter by surname (case insensitive)
+        in: query
+        name: surname
+        type: string
+      - description: Minimum age filter (use with age_2 for range)
+        in: query
+        name: age
+        type: integer
+      - description: Maximum age filter (use with age for range)
+        in: query
+        name: age_2
+        type: integer
+      - description: Filter by gender (male/female/other)
+        in: query
+        name: gender
+        type: string
+      - description: Filter by nationality (2-letter country code)
+        in: query
+        name: nationality
+        type: string
+      - description: 'Number of items per page (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request - Invalid filter parameters
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error - Database or server issue
+          schema:
+            type: string
+      summary: Get users with filters and pagination
       tags:
       - Users
 swagger: "2.0"

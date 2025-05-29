@@ -29,7 +29,7 @@ type CreateUserParams struct {
 	Name        string
 	Surname     string
 	Patronymic  pgtype.Text
-	Age         pgtype.Int4
+	Age         int32
 	Gender      pgtype.Text
 	Nationality pgtype.Text
 }
@@ -95,65 +95,65 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 const getUsers = `-- name: GetUsers :many
 SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM users
 WHERE 
-    (name = $1 OR $1 IS NULL) AND
-    (surname = $2 OR $2 IS NULL) AND
-    (age >= $3 OR $3 IS NULL) AND
-    (age <= $4 OR $4 IS NULL) AND
-    (gender = $5 OR $5 IS NULL) AND
-    (nationality = $6 OR $6 IS NULL)
+    ($1 = '' OR $1 IS NULL OR name ILIKE '%' || $1 || '%') AND
+    ($2 = '' OR $2 IS NULL OR surname ILIKE '%' || $2 || '%') AND
+    ($3 = 0 OR $3 IS NULL OR age >= $3) AND
+    ($4 = 0 OR $4 IS NULL OR age <= $4) AND
+    ($5 = '' OR $5 IS NULL OR gender = $5) AND
+    ($6 = '' OR $6 IS NULL OR nationality = $6)
 ORDER BY id
 LIMIT $7 OFFSET $8
 `
 
 type GetUsersParams struct {
-	Name        string
-	Surname     string
-	Age         pgtype.Int4
-	Age_2       pgtype.Int4
-	Gender      pgtype.Text
-	Nationality pgtype.Text
-	Limit       int32
-	Offset      int32
+    Name        interface{}
+    Surname     interface{}
+    MinAge      interface{}
+    MaxAge      interface{}
+    Gender      interface{}
+    Nationality interface{}
+    Limit       int32
+    Offset      int32
 }
 
-// Получение данных с фильтрами и пагинацией (соответствует REST GET /api/v1/User)
 func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, getUsers,
-		arg.Name,
-		arg.Surname,
-		arg.Age,
-		arg.Age_2,
-		arg.Gender,
-		arg.Nationality,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Surname,
-			&i.Patronymic,
-			&i.Age,
-			&i.Gender,
-			&i.Nationality,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+    rows, err := q.db.Query(ctx, getUsers,
+        arg.Name,
+        arg.Surname,
+        arg.MinAge,
+        arg.MaxAge,
+        arg.Gender,
+        arg.Nationality,
+        arg.Limit,
+        arg.Offset,
+    )
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var items []User
+    for rows.Next() {
+        var i User
+        if err := rows.Scan(
+            &i.ID,
+            &i.Name,
+            &i.Surname,
+            &i.Patronymic,
+            &i.Age,
+            &i.Gender,
+            &i.Nationality,
+            &i.CreatedAt,
+            &i.UpdatedAt,
+        ); err != nil {
+            return nil, err
+        }
+        items = append(items, i)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    return items, nil
 }
 
 const updateUser = `-- name: UpdateUser :one

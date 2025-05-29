@@ -17,12 +17,12 @@ INSERT INTO users (
 -- name: GetUsers :many
 SELECT * FROM users
 WHERE 
-    (name = $1 OR $1 IS NULL) AND
-    (surname = $2 OR $2 IS NULL) AND
-    (age >= $3 OR $3 IS NULL) AND
-    (age <= $4 OR $4 IS NULL) AND
-    (gender = $5 OR $5 IS NULL) AND
-    (nationality = $6 OR $6 IS NULL)
+    ($1 = '' OR $1 IS NULL OR name ILIKE '%' || $1 || '%') AND
+    ($2 = '' OR $2 IS NULL OR surname ILIKE '%' || $2 || '%') AND
+    ($3 = 0 OR $3 IS NULL OR age >= $3) AND
+    ($4 = 0 OR $4 IS NULL OR age <= $4) AND
+    ($5 = '' OR $5 IS NULL OR gender = $5) AND
+    ($6 = '' OR $6 IS NULL OR nationality = $6)
 ORDER BY id
 LIMIT $7 OFFSET $8;
 
