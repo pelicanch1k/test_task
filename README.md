@@ -1,6 +1,4 @@
 ## Стек технологий
-
-### LQD Service
 - Язык: Golang
 - База данных: PostgreSQL
 - Генерация кода: SQLC
