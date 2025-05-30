@@ -119,7 +119,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Offset for pagination (default: 0)",
+                        "description": "Offset for pagination (default: 1)",
                         "name": "offset",
                         "in": "query"
                     }
@@ -147,6 +147,63 @@ const docTemplate = `{
             }
         },
         "/api/v1/users/{id}": {
+            "put": {
+                "description": "Updates user information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User update data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.UpdateUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ModelResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid input",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - User not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - Database or server issue",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete user",
                 "consumes": [
@@ -162,9 +219,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "id юзера для удаления",
+                        "description": "User ID",
                         "name": "id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -172,7 +229,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.ModelResponseDto"
                         }
                     },
                     "400": {
@@ -192,6 +249,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.ModelResponseDto": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "model": {},
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "users.CreateUser": {
             "type": "object",
             "required": [
@@ -211,6 +280,38 @@ const docTemplate = `{
                 "surname": {
                     "type": "string",
                     "maxLength": 40
+                }
+            }
+        },
+        "users.UpdateUser": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "maximum": 150,
+                    "minimum": 0
+                },
+                "gender": {
+                    "type": "string",
+                    "enum": [
+                        "male",
+                        "female",
+                        "other"
+                    ]
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string",
+                    "maxLength": 2,
+                    "minLength": 2
+                },
+                "patronymic": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
                 }
             }
         }

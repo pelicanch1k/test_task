@@ -61,14 +61,22 @@ func (u *UsersService) CreateUser(ctx context.Context, user *model.CreateUserPar
 	})
 }
 
-func (u *UsersService) UpdateUser(ctx context.Context, userData *gen.UpdateUserParams) error {
-	return u.usersRepository.UpdateUser(ctx, userData)
+func (u *UsersService) UpdateUser(ctx context.Context, params *gen.UpdateUserParams) error {
+	return u.usersRepository.UpdateUser(ctx, params)
 }
 
 func (u *UsersService) DeleteUser(ctx context.Context, id int32) error {
+	if _, err := u.usersRepository.GetUserByID(ctx, id); err != nil {
+		return err
+	} 
+
 	return u.usersRepository.DeleteUser(ctx, id)
 }
 
 func (u *UsersService) GetUsers(ctx context.Context, filters *model.GetUsersParams) ([]gen.User, error) {
 	return u.usersRepository.GetUsers(ctx, ConvertToGetUsersParams(filters))
+}
+
+func (u *UsersService) GetUserByID(ctx context.Context,  id int32) (gen.User, error) {
+	return u.usersRepository.GetUserByID(ctx, id)
 }

@@ -171,8 +171,8 @@ RETURNING id, name, surname, patronymic, age, gender, nationality, created_at, u
 
 type UpdateUserParams struct {
 	ID          int32
-	Name        string
-	Surname     string
+	Name        pgtype.Text
+	Surname     pgtype.Text
 	Patronymic  pgtype.Text
 	Age         pgtype.Int4
 	Gender      pgtype.Text

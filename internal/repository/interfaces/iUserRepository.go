@@ -7,6 +7,8 @@ import (
 
 type IUserRepository interface {
 	GetUsers(ctx context.Context, filters *gen.GetUsersParams) ([]gen.User, error)
+	
+	GetUserByID(ctx context.Context,  id int32) (gen.User, error)
 
 	DeleteUser(ctx context.Context, id int32) error
 

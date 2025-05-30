@@ -30,6 +30,16 @@ func (u *UserRepository) GetUsers(ctx context.Context, filters *gen.GetUsersPara
 	return users, err
 }
 
+func (u *UserRepository) GetUserByID(ctx context.Context,  id int32) (gen.User, error) {
+	repo, release, err := GetQueriesFromPool(ctx, globalPool)
+	if err != nil {
+		return gen.User{}, repoError("GetUserByID")
+	}
+	defer release()
+
+	return repo.GetUserByID(ctx, id)
+}
+
 func (u *UserRepository) DeleteUser(ctx context.Context, id int32) error{
 	repo, release, err := GetQueriesFromPool(ctx, globalPool)
 	if err != nil {

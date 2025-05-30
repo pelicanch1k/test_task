@@ -18,7 +18,12 @@ type (
 		Offset      int    `json:"offset"`
 	}
 
-	DeleteUser struct {
-		Id int32 `json:"id validate:"required`
+	UpdateUser struct {
+		Name        *string  `json:"name,omitempty"`
+		Surname     *string  `json:"surname, omitempty"`
+		Patronymic  *string `json:"patronymic,omitempty"`
+		Age         *int32  `json:"age,omitempty" validate:"omitempty,min=0,max=150"`
+		Gender      *string `json:"gender,omitempty" validate:"omitempty,oneof=male female other"`
+		Nationality *string `json:"nationality,omitempty" validate:"omitempty,min=2,max=2"`
 	}
 )

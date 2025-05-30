@@ -1,14 +1,18 @@
 package users
 
 import (
+	"strconv"
+	"strings"
 	"test_task/internal/consts"
 	"test_task/internal/model"
+	"test_task/internal/repository/gen"
 	"test_task/internal/services"
 	"test_task/internal/services/interfaces"
 	"test_task/internal/validation"
 
 	"github.com/gofiber/fiber/v2"
 	bind "github.com/idan-fishman/fiber-bind"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
 )
 
@@ -33,15 +37,13 @@ func InitRoutes(router fiber.Router) {
 		Source:    bind.Params,
 	}, &GetUsers{}), routes.getUsersHandler)
 
-	router.Delete("/:userId", bind.New(bind.Config{
-		Validator: validation.GetValidator(),
-		Source:    bind.Params,
-	}, &DeleteUser{}), routes.deleteUserHandler)
+	// Исправлено: используем :id вместо :userId
+	router.Delete("/:id", routes.deleteUserHandler)
 
-	router.Put("/:userId", bind.New(bind.Config{
+	router.Put("/:id", bind.New(bind.Config{
 		Validator: validation.GetValidator(),
-		Source:    bind.Params,
-	}, &DeleteUser{}), routes.deleteUserHandler)
+		Source:    bind.JSON,
+	}, &UpdateUser{}), routes.updateUserHandler)
 }
 
 // @Summary		Add a new user
@@ -75,35 +77,6 @@ func (r *Routes) createUserHandler(c *fiber.Ctx) error {
 	l.Info().Msg("user created")
 
 	return c.JSON(&model.ModelResponseDto{Status: model.ResponseStatusOk, Model: userEntity})
-}
-
-// @Summary		Delete user
-// @Description	Delete user
-// @Tags			Users
-// @Accept			json
-// @Produce		json
-// @Param        id          query    int     true  "id юзера для удаления"
-// @Success		200		{string}	string			"OK"
-// @Failure		400		{string}	string			"Bad Request - Invalid input"
-// @Failure		500		{string}	string			"Internal Server Error - Database or server issue"
-// @Router /api/v1/users/{id} [delete]
-func (r *Routes) deleteUserHandler(c *fiber.Ctx) error {
-	l := c.Locals(consts.RequestLogger).(*zerolog.Logger)
-
-	// Получаем query-параметры
-	queryParams := new(DeleteUser)
-	if err := c.QueryParser(queryParams); err != nil {
-		l.Error().Err(err).Msg("failed to parse query parameters")
-		return fiber.ErrBadRequest
-	}
-
-	if err := r.userService.DeleteUser(c.UserContext(), queryParams.Id); err != nil {
-		l.Error().Err(err).Send()
-		return fiber.ErrInternalServerError
-	}
-
-	l.Info().Msg("user deleted")
-	return c.JSON(&model.ModelResponseDto{Status: model.ResponseStatusOk, Message: "ok"})
 }
 
 // @Summary      Get users with filters and pagination
@@ -143,6 +116,142 @@ func (r *Routes) getUsersHandler(c *fiber.Ctx) error {
 	return c.JSON(&model.ModelResponseDto{Status: model.ResponseStatusOk, Model: users})
 }
 
-func (r *Routes) updateUsersHandler(c *fiber.Ctx) error {
-	return nil
+
+// @Summary		Delete user
+// @Description	Delete user
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param        id   path  int  true  "User ID"
+// @Success		200		{object}	model.ModelResponseDto
+// @Failure		400		{string}	string	"Bad Request - Invalid input"
+// @Failure		500		{string}	string	"Internal Server Error - Database or server issue"
+// @Router       /api/v1/users/{id} [delete]
+func (r *Routes) deleteUserHandler(c *fiber.Ctx) error {
+	l := c.Locals(consts.RequestLogger).(*zerolog.Logger)
+
+	// Получаем ID из пути
+	idParam := c.Params("id")
+	
+	// Проверяем, что значение не содержит фигурных скобок (плейсхолдер)
+	if strings.ContainsAny(idParam, "{}") {
+		l.Error().Str("id", idParam).Msg("invalid user ID format - placeholder detected")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid user ID: placeholder not replaced")
+	}
+
+	// Конвертируем в число
+	id, err := strconv.Atoi(idParam)
+	if err != nil || id <= 0 {
+		l.Error().Str("id", idParam).Msg("invalid user ID format")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid user ID: must be positive integer")
+	}
+
+	if err := r.userService.DeleteUser(c.UserContext(), int32(id)); err != nil {
+		l.Error().Err(err).Send()
+		return fiber.ErrInternalServerError
+	}
+
+	l.Info().Msg("user deleted")
+	return c.JSON(&model.ModelResponseDto{Status: model.ResponseStatusOk, Message: "ok"})
+}
+
+// ... (getUsersHandler остается без изменений) ...
+
+// @Summary      Update user
+// @Description  Updates user information
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Param        request body   UpdateUser  true  "User update data"
+// @Success      200  {object}  model.ModelResponseDto
+// @Failure      400  {string}  string  "Bad Request - Invalid input"
+// @Failure      404  {string}  string  "Not Found - User not found"
+// @Failure      500  {string}  string  "Internal Server Error - Database or server issue"
+// @Router       /api/v1/users/{id} [put]
+func (r *Routes) updateUserHandler(c *fiber.Ctx) error {
+	l := c.Locals(consts.RequestLogger).(*zerolog.Logger)
+	body := c.Locals(bind.JSON).(*UpdateUser)
+
+	// Получаем ID из пути
+	idParam := c.Params("id")
+	
+	// Проверяем, что значение не содержит фигурных скобок (плейсхолдер)
+	if strings.ContainsAny(idParam, "{}") {
+		l.Error().Str("id", idParam).Msg("invalid user ID format - placeholder detected")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid user ID: placeholder not replaced")
+	}
+
+	// Конвертируем в число
+	id, err := strconv.Atoi(idParam)
+	if err != nil || id <= 0 {
+		l.Error().Str("id", idParam).Msg("invalid user ID format")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid user ID: must be positive integer")
+	}
+
+	// Проверяем существование пользователя
+	if _, err := r.userService.GetUserByID(c.UserContext(), int32(id)); err != nil {
+		l.Error().Err(err).Msg("user not found")
+		return fiber.ErrNotFound
+	}
+
+	// Подготавливаем параметры для обновления
+	updateParams := gen.UpdateUserParams{
+		ID:      int32(id),
+	}
+
+	if body.Name != nil {
+		updateParams.Name = pgtype.Text{String: *body.Name, Valid: true}
+	} else {
+		updateParams.Name = pgtype.Text{Valid: false}
+	}
+
+	if body.Surname != nil {
+		updateParams.Surname = pgtype.Text{String: *body.Surname, Valid: true}
+	} else {
+		updateParams.Surname = pgtype.Text{Valid: false}
+	}
+
+	if body.Patronymic != nil {
+		updateParams.Patronymic = pgtype.Text{String: *body.Patronymic, Valid: true}
+	} else {
+		updateParams.Patronymic = pgtype.Text{Valid: false}
+	}
+
+	if body.Age != nil {
+		updateParams.Age = pgtype.Int4{Int32: *body.Age, Valid: true}
+	} else {
+		updateParams.Age = pgtype.Int4{Valid: false}
+	}
+
+	if body.Gender != nil {
+		updateParams.Gender = pgtype.Text{String: *body.Gender, Valid: true}
+	} else {
+		updateParams.Gender = pgtype.Text{Valid: false}
+	}
+
+	if body.Nationality != nil {
+		updateParams.Nationality = pgtype.Text{String: *body.Nationality, Valid: true}
+	} else {
+		updateParams.Nationality = pgtype.Text{Valid: false}
+	}
+
+	// Обновляем данные
+	err = r.userService.UpdateUser(c.UserContext(), &updateParams)
+	if err != nil {
+		l.Error().Err(err).Send()
+		return fiber.ErrInternalServerError
+	}
+
+	user, err := r.userService.GetUserByID(c.UserContext(), int32(id))
+	if err != nil {
+		l.Error().Err(err).Send()
+		return fiber.ErrInternalServerError
+	}
+
+	l.Info().Msg("user updated successfully")
+	return c.JSON(&model.ModelResponseDto{
+		Status: model.ResponseStatusOk,
+		Model:  user,
+	})
 }
