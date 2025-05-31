@@ -20,7 +20,7 @@ type (
 
 	UpdateUser struct {
 		Name        *string  `json:"name,omitempty"`
-		Surname     *string  `json:"surname, omitempty"`
+		Surname     *string  `json:"surname,omitempty"`
 		Patronymic  *string `json:"patronymic,omitempty"`
 		Age         *int32  `json:"age,omitempty" validate:"omitempty,min=0,max=150"`
 		Gender      *string `json:"gender,omitempty" validate:"omitempty,oneof=male female other"`
